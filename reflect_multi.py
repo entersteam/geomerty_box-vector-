@@ -6,11 +6,14 @@ def unit_vector(vector):
     return unit
 
 class ball:    
-    vector = unit_vector(np.random.normal(0, 1, 2))
-    speed = 5
-    pos = np.array([200,200], dtype=np.float64)
-    def __init__(self,speed) -> None:
+    def __init__(self,speed=5) -> None:
         self.speed = speed
+        self.vector = unit_vector(np.random.normal(0, 1, 2))
+        self.pos = np.array([200,200], dtype=np.float64)
+            
+    def reflect(self, norm):
+        self.vector += 2 * norm * np.dot(norm,-self.vector)
+        
     def crash_detection(self):
         if self.pos[0]>400:
             norm = np.array((-1,0))
@@ -24,13 +27,23 @@ class ball:
         if self.pos[1]<0:
             norm = np.array((0,-1))
             self.reflect(norm)
-    def reflect(self, norm):
-        self.vector += 2 * norm * np.dot(norm,-self.vector)
+        
     def move(self):
         self.pos += self.vector*self.speed
         
-a = ball(np.random.randint(3,7))
-balls = [a]
+
+balls = [ball()]
+
+def mouse_event(event, x, y, flags, param):
+    global balls
+    if event == cv2.EVENT_FLAG_LBUTTON:
+        balls.append(ball(np.random.randint(3,7)))
+
+    elif event == cv2.EVENT_FLAG_RBUTTON:
+        balls.pop(0)
+
+window = cv2.namedWindow('geometry')
+cv2.setMouseCallback('geometry', mouse_event)
 
 while True:
     scr = np.full((400,400,3),(255,255,255), dtype=np.uint8)
@@ -38,13 +51,8 @@ while True:
         cv2.circle(scr, i.pos.astype(int), 3, (0,0,0))
         i.crash_detection()
         i.move()
-        print(i.pos)
-    print('-----------------')
     cv2.imshow('geometry', scr)
     command = cv2.waitKey(16) & 0xFF
     if  command == 27:
         break
-    elif command == ord('p'):
-        a = ball(np.random.randint(3,7))
-        balls.append(a)
 cv2.destroyAllWindows

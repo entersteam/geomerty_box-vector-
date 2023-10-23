@@ -6,7 +6,7 @@ def unit_vector(vector):
     return unit
 
 ball_vector = unit_vector(np.random.normal(0, 1, 2))
-ball_speed = 5
+ball_speed = 7
 ball_pos = np.array([200,200], dtype=np.float64)
 
 def reflect(vector, norm):
@@ -32,25 +32,40 @@ def crash_detection():
         norm = np.array((0,-1))
         ball_vector = reflect(ball_vector,norm)
         ball_vector = unit_vector(ball_vector)
-    
-chaser_pos = np.array((200,200), dtype=np.float64)
-chaser_vector = np.array((0,0), dtype=np.float64)
-chaser_speed = 3
 
-def chase():
-    global chaser_speed, chaser_pos, chaser_vector
-    vector = ball_pos - chaser_pos
-    chaser_vector = unit_vector(vector)
-    chaser_pos += chaser_vector * chaser_speed
+class chaser:
+    def __init__(self) -> None:
+        self.pos = np.array((200,200), dtype=np.float64)
+        self.vector = np.array((0,0), dtype=np.float64)
+        self.speed = 2 + np.random.rand() * 3
+
+    def chase(self):
+        self.vector = ball_pos - self.pos
+        self.vector = unit_vector(self.vector)
+        self.pos += self.vector * self.speed
     
+
+chasers = [chaser()]
+
+def mouse_event(event, x, y, flags, param):
+    global chasers
+    if event == cv2.EVENT_FLAG_LBUTTON:
+        chasers.append(chaser())
+
+    elif event == cv2.EVENT_FLAG_RBUTTON:
+        chasers.pop(0)
+
+window = cv2.namedWindow('geometry')
+cv2.setMouseCallback('geometry', mouse_event)
 
 while True:
     scr = np.full((400,400,3),(255,255,255), dtype=np.uint8)
     cv2.circle(scr, ball_pos.astype(int), 3, (0,0,0))
     crash_detection()
     ball_pos += ball_vector*ball_speed
-    chase()
-    cv2.circle(scr, chaser_pos.astype(int), 3, (0,0,255))
+    for i in chasers:
+        i.chase()
+        cv2.circle(scr, i.pos.astype(int), 3, (0,0,255))
     cv2.imshow('geometry', scr)
     if cv2.waitKey(16) & 0xFF == 27:
         break
